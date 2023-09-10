@@ -8,7 +8,7 @@ from flask import Flask
 
 from pyngrok import ngrok
 
-ngrok_token = 'ngrok_token'
+ngrok_token = ngrok_token
 
 if __name__ == '__main__':
     # Load configuration from config.json
