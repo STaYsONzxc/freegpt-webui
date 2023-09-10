@@ -53,8 +53,8 @@ def gradio_to_flask(*args, **kwargs):
 
 interface = gr.Interface(
     fn=flask_to_gradio,
-    inputs=None,  # Define your input components here
-    outputs=None,  # Define your output components here
+    inputs=gr.Textbox(),  # Define a simple text input
+    outputs=None,
     fn_output=gradio_to_flask,
 )
 
