@@ -43,4 +43,9 @@ if __name__ == '__main__':
 
     # Run Flask with Ngrok
     run_with_ngrok(app)
-    app.run(**site_config)
+
+    # Удалите 'host' из site_config, так как Flask уже настроен для использования Ngrok
+    site_config.pop('host', None)
+
+    # Замените `app.run(**site_config)` на простой запуск Flask
+    app.run()
