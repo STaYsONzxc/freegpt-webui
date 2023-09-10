@@ -1,35 +1,30 @@
-import argparse
 import secrets
-import json
-from flask import Flask
-from flask_ngrok import run_with_ngrok
 from server.bp import bp
 from server.website import Website
 from server.backend import Backend_Api
 from server.babel import create_babel
-from pyngrok import ngrok  # Импортируйте ngrok
+from json import load
+from flask import Flask
+from pyngrok import ngrok
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Run the FreeGPT web application")
-    parser.add_argument("--token", type=str, default="", help="Your ngrok token")
-    return parser.parse_args()
+# Используйте значение переменной Token
+ngrok.set_auth_token(Token)
 
+# Остальной код остается неизменным
 if __name__ == '__main__':
-    args = parse_args()
-
     # Load configuration from config.json
-    config = json.load(open('config.json', 'r'))
+    config = load(open('config.json', 'r'))
     site_config = config['site_config']
     url_prefix = config.pop('url_prefix')
 
-    # Создайте экземпляр приложения Flask
+    # Create the app
     app = Flask(__name__)
     app.secret_key = secrets.token_hex(16)
 
-    # Настройте Babel
+    # Set up Babel
     create_babel(app)
 
-    # Настройте маршруты для веб-сайта
+    # Set up the website routes
     site = Website(bp, url_prefix)
     for route in site.routes:
         bp.add_url_rule(
@@ -38,7 +33,7 @@ if __name__ == '__main__':
             methods=site.routes[route]['methods'],
         )
 
-    # Настройте маршруты для бэкенда API
+    # Set up the backend API routes
     backend_api = Backend_Api(bp, config)
     for route in backend_api.routes:
         bp.add_url_rule(
@@ -47,20 +42,18 @@ if __name__ == '__main__':
             methods=backend_api.routes[route]['methods'],
         )
 
-    # Зарегистрируйте blueprint
+    # Register the blueprint
     app.register_blueprint(bp, url_prefix=url_prefix)
 
-    # Запуск Flask с использованием Ngrok
-    if args.token:
-        # Используйте токен Ngrok, если он предоставлен в аргументах командной строки
-        ngrok.set_auth_token(args.token)
+    # Start Ngrok and create a tunnel for the Flask app
+    public_url = ngrok.connect(site_config['port'])
+    print(f" * ngrok tunnel \"{public_url}\" -> \"http://127.0.0.1:{site_config['port']}\"")
 
-    # Запустите Ngrok и получите общедоступный URL
-    public_url = ngrok.connect(port=site_config['port'])
-
-    # Выведите общедоступный URL в консоль
-    print(" * Ngrok URL:", public_url)
-
-    # Замените `app.run(**site_config)` на простой запуск Flask
-    app.run()
+    try:
+        # Run the Flask server
+        app.run(host="0.0.0.0", port=site_config['port'])
+    except KeyboardInterrupt:
+        # If the user presses Ctrl+C, gracefully stop the Ngrok tunnel and exit
+        ngrok.disconnect(public_url)
+        print(" * ngrok tunnel stopped")
 
