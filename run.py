@@ -1,3 +1,4 @@
+import argparse
 import secrets
 import json
 from flask import Flask
@@ -7,7 +8,14 @@ from server.website import Website
 from server.backend import Backend_Api
 from server.babel import create_babel
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run the FreeGPT web application")
+    parser.add_argument("--token", type=str, default="", help="Your ngrok token")
+    return parser.parse_args()
+
 if __name__ == '__main__':
+    args = parse_args()
+
     # Load configuration from config.json
     config = json.load(open('config.json', 'r'))
     site_config = config['site_config']
@@ -49,3 +57,4 @@ if __name__ == '__main__':
 
     # Замените `app.run(**site_config)` на простой запуск Flask
     app.run()
+
